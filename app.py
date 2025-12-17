@@ -1,117 +1,70 @@
-import gradio as gr
+import streamlit as st
 import openai
 import os
 from dotenv import load_dotenv
 from prompts import build_prompt
 
-# Load environment variables
+# Load API key
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-def rewrite_email(
-    email_text,
-    personality,
-    formality,
-    politeness,
-    temperature,
-    custom_style_sample
-):
-    if not email_text.strip():
-        return "Please enter an email to rewrite."
+st.set_page_config(page_title="PersonaWrite", layout="centered")
 
-    system_prompt, user_prompt = build_prompt(
-        email_text,
-        personality,
-        formality,
-        politeness,
-        custom_style_sample
-    )
+st.title("✉️ PersonaWrite – Personality-Based Email Rewriter")
+st.write(
+    "Rewrite emails using personality traits or your own writing style using prompt-engineered GenAI."
+)
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
-        temperature=temperature,
-        max_tokens=300
-    )
+email_text = st.text_area(
+    "Original Email",
+    placeholder="Paste your email here...",
+    height=150
+)
 
-    return response.choices[0].message["content"]
+personality = st.selectbox(
+    "Personality Style",
+    [
+        "Professional & Formal",
+        "Polite & Agreeable",
+        "Assertive & Confident",
+        "Friendly & Warm",
+        "Custom – Write in My Tone"
+    ]
+)
 
-
-with gr.Blocks(title="PersonaWrite – Personality-Based Email Rewriter") as demo:
-    gr.Markdown("## ✉️ PersonaWrite")
-    gr.Markdown(
-        "A prompt-engineered GenAI system to rewrite emails based on personality traits and custom writing style."
-    )
-
-    email_input = gr.Textbox(
-        label="Original Email",
-        placeholder="Paste your email here...",
-        lines=6
-    )
-
-    personality = gr.Dropdown(
-        choices=[
-            "Professional & Formal",
-            "Polite & Agreeable",
-            "Assertive & Confident",
-            "Friendly & Warm",
-            "Custom – Write in My Tone"
-        ],
-        value="Professional & Formal",
-        label="Personality Style"
-    )
-
-    custom_style = gr.Textbox(
-        label="Your Writing Style Sample (Only for Custom Tone)",
+custom_style_sample = ""
+if personality == "Custom – Write in My Tone":
+    custom_style_sample = st.text_area(
+        "Your Writing Style Sample",
         placeholder="Paste a paragraph or email written by you...",
-        lines=4
+        height=120
     )
 
-    formality = gr.Slider(
-        minimum=1,
-        maximum=5,
-        value=3,
-        step=1,
-        label="Formality Level"
-    )
+formality = st.slider("Formality Level", 1, 5, 3)
+politeness = st.slider("Politeness Level", 1, 5, 3)
+temperature = st.slider("Creativity (Temperature)", 0.0, 1.0, 0.5, 0.1)
 
-    politeness = gr.Slider(
-        minimum=1,
-        maximum=5,
-        value=3,
-        step=1,
-        label="Politeness Level"
-    )
-
-    temperature = gr.Slider(
-        minimum=0.0,
-        maximum=1.0,
-        value=0.5,
-        step=0.1,
-        label="Creativity (Temperature)"
-    )
-
-    rewrite_button = gr.Button("Rewrite Email")
-
-    output = gr.Textbox(
-        label="Rewritten Email",
-        lines=6
-    )
-
-    rewrite_button.click(
-        fn=rewrite_email,
-        inputs=[
-            email_input,
+if st.button("Rewrite Email"):
+    if not email_text.strip():
+        st.warning("Please enter an email.")
+    else:
+        system_prompt, user_prompt = build_prompt(
+            email_text,
             personality,
             formality,
             politeness,
-            temperature,
-            custom_style
-        ],
-        outputs=output
-    )
+            custom_style_sample
+        )
 
-demo.launch()
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=temperature,
+            max_tokens=300
+        )
+
+        st.subheader("Rewritten Email")
+        st.write(response.choices[0].message["content"])
