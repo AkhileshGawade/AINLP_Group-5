@@ -1,13 +1,13 @@
 import streamlit as st
 import os
-from openai import OpenAI
+from groq import Groq
 from dotenv import load_dotenv
 from prompts import build_prompt
 
-# Load environment variables
+# Load env vars (local use)
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 st.set_page_config(page_title="PersonaWrite", layout="centered")
 
@@ -45,27 +45,33 @@ formality = st.slider("Formality Level", 1, 5, 3)
 politeness = st.slider("Politeness Level", 1, 5, 3)
 temperature = st.slider("Creativity (Temperature)", 0.0, 1.0, 0.5, 0.1)
 
+if "last_output" not in st.session_state:
+    st.session_state.last_output = ""
+
 if st.button("Rewrite Email"):
     if not email_text.strip():
         st.warning("Please enter an email.")
     else:
-        system_prompt, user_prompt = build_prompt(
-            email_text,
-            personality,
-            formality,
-            politeness,
-            custom_style_sample
-        )
+        with st.spinner("Rewriting email..."):
+            system_prompt, user_prompt = build_prompt(
+                email_text,
+                personality,
+                formality,
+                politeness,
+                custom_style_sample
+            )
 
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=temperature,
-            max_tokens=300
-        )
+            response = client.chat.completions.create(
+                model="llama3-8b-8192",  # FREE & FAST
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=temperature,
+                max_tokens=400
+            )
 
-        st.subheader("Rewritten Email")
-        st.write(response.choices[0].message.content)
+            st.session_state.last_output = response.choices[0].message.content
+
+st.subheader("Rewritten Email")
+st.write(st.session_state.last_output)
