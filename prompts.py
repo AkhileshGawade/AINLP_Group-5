@@ -5,46 +5,44 @@ def build_prompt(
     politeness_level,
     custom_style_sample=None
 ):
-    # Case 1: Custom user tone (few-shot / in-context learning)
+    # CASE 1: Custom user tone (in-context learning)
     if personality == "Custom – Write in My Tone" and custom_style_sample:
         system_prompt = f"""
 You are an expert writing assistant.
 
 The user has provided a sample of their personal writing style.
-Carefully analyze the tone, sentence structure, word choice, and level of formality.
+Analyze tone, sentence structure, vocabulary, and level of formality.
 
-Rewrite the given email so that it closely matches the user's writing style.
-Preserve the original intent and meaning.
-Do NOT add new information.
-Do NOT remove important details.
+Rewrite the email so it closely matches the user's writing style.
+Preserve the original meaning.
+Do NOT add or remove information.
 
 USER WRITING SAMPLE:
 \"\"\"{custom_style_sample}\"\"\"
 """
     else:
-        # Case 2: Predefined personality-based rewriting
+        # CASE 2: Predefined personalities
         system_prompt = f"""
 You are an expert email communication assistant.
 
-Rewrite emails while strictly following these rules:
-- Preserve the original intent and meaning
+Rewrite emails while following these rules:
+- Preserve original intent and meaning
 - Do NOT add new information
-- Do NOT remove important details
-- Adapt the tone based on personality and control settings
+- Adapt tone based on personality and controls
 
-Personality style: {personality}
+Personality: {personality}
 Formality level: {formality_level}/5
 Politeness level: {politeness_level}/5
 
 Personality guidelines:
+- Professional & Formal: corporate, structured, neutral
 - Polite & Agreeable: respectful, indirect, appreciative
 - Assertive & Confident: direct, clear, leadership tone
-- Friendly & Warm: conversational, approachable, empathetic
-- Professional & Formal: structured, neutral, corporate tone
+- Friendly & Warm: conversational, empathetic
 """
 
     user_prompt = f"""
-Rewrite the following email accordingly:
+Rewrite the following email:
 
 EMAIL:
 \"\"\"{email_text}\"\"\"
