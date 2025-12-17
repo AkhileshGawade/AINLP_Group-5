@@ -4,7 +4,7 @@ from groq import Groq
 from dotenv import load_dotenv
 from prompts import build_prompt
 
-# Load env vars (local testing)
+# Load environment variables (for local use)
 load_dotenv()
 
 # Initialize Groq client
@@ -15,10 +15,10 @@ st.set_page_config(page_title="PersonaWrite", layout="centered")
 st.title("✉️ PersonaWrite – Personality-Based Email Rewriter")
 st.write(
     "Rewrite emails using personality traits or your own writing style "
-    "using prompt-engineered GenAI (free API, no training)."
+    "using prompt-engineered GenAI (free, no training)."
 )
 
-# -------- UI -------- #
+# ---------------- UI ---------------- #
 
 email_text = st.text_area(
     "Original Email",
@@ -49,11 +49,11 @@ formality = st.slider("Formality Level", 1, 5, 3)
 politeness = st.slider("Politeness Level", 1, 5, 3)
 temperature = st.slider("Creativity (Temperature)", 0.0, 1.0, 0.5, 0.1)
 
-# Prevent repeated API calls
+# Prevent multiple API calls on rerun
 if "last_output" not in st.session_state:
     st.session_state.last_output = ""
 
-# -------- ACTION -------- #
+# ---------------- ACTION ---------------- #
 
 if st.button("Rewrite Email"):
     if not email_text.strip():
@@ -70,7 +70,7 @@ if st.button("Rewrite Email"):
 
             try:
                 response = client.chat.completions.create(
-                    model="llama3-8b-8192",  # ✅ SUPPORTED MODEL
+                    model="llama-3.1-8b-instant",  # ✅ CURRENTLY SUPPORTED
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
@@ -87,7 +87,7 @@ if st.button("Rewrite Email"):
                 st.error("Error while generating response")
                 st.exception(e)
 
-# -------- OUTPUT -------- #
+# ---------------- OUTPUT ---------------- #
 
 st.subheader("Rewritten Email")
 st.write(st.session_state.last_output)
